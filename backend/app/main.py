@@ -111,3 +111,17 @@ def health_check():
 
 # Register master API routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.on_event("startup")
+def on_startup():
+    """Ensure database tables and initial seed data exist upon server launch."""
+    try:
+        from app.database.session import SessionLocal
+        from app.database.init_db import init_db
+        with SessionLocal() as db:
+            init_db(db)
+        logger.info("AIIA CTMS database initialized and verified successfully.")
+    except Exception as e:
+        logger.error(f"Startup database initialization warning: {e}")
+
