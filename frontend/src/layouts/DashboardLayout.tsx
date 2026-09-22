@@ -16,14 +16,24 @@ import {
   FlaskConical,
   UserCheck,
   FileCheck2,
-  Network,
   Zap,
   Check,
   Loader2,
   Stethoscope,
-  Scale
+  BarChart3,
+  ShieldAlert,
+  CalendarCheck,
+  UserPlus,
+  CheckSquare,
+  Calendar,
+  FolderGit2,
+  Settings,
+  Layers,
+  FileText
 } from 'lucide-react';
 import { StatusBadge } from '../components/StatusBadge';
+import { RoleMatrixModal } from '../components/modals/RoleMatrixModal';
+import { getRoleDefinition } from '../data/rolesConfig';
 
 interface PersonaOption {
   username: string;
@@ -36,69 +46,56 @@ interface PersonaOption {
 
 const SWITCHER_PERSONAS: PersonaOption[] = [
   {
+    username: 'researcher',
+    roleName: 'RESEARCHER',
+    label: 'Researcher',
+    duty: 'Monitor and analyze clinical trials, aggregate safety & analytics.',
+    color: 'border-purple-300 bg-purple-50 text-purple-800',
+    icon: <BarChart3 className="w-4 h-4 text-purple-600" />
+  },
+  {
     username: 'investigator',
     roleName: 'PRINCIPAL_INVESTIGATOR',
-    label: 'Principal Investigator',
-    duty: 'Manage protocols, multi-centric sites, visits & NAMASTE auto-coding.',
-    color: 'border-blue-200 bg-blue-50 text-blue-800',
+    label: 'Investigator',
+    duty: 'Clinical decisions, assigned participants, visits & assessments.',
+    color: 'border-blue-300 bg-blue-50 text-blue-800',
     icon: <Stethoscope className="w-4 h-4 text-blue-600" />
-  },
-  {
-    username: 'ethics',
-    roleName: 'ETHICS_COMMITTEE',
-    label: 'Ethics Committee Chair',
-    duty: 'Review protocol dossiers & execute 21 CFR Part 11 digital approval signatures.',
-    color: 'border-indigo-200 bg-indigo-50 text-indigo-800',
-    icon: <FileCheck2 className="w-4 h-4 text-indigo-600" />
-  },
-  {
-    username: 'pharmacovigilance',
-    roleName: 'PHARMACOVIGILANCE_OFFICER',
-    label: 'Pharmacovigilance Lead',
-    duty: 'Monitor 24h statutory SAE countdown & 1-click DCGI notice dispatch.',
-    color: 'border-rose-200 bg-rose-50 text-rose-800',
-    icon: <Zap className="w-4 h-4 text-rose-600" />
   },
   {
     username: 'coordinator',
     roleName: 'STUDY_COORDINATOR',
-    label: 'Study Coordinator',
-    duty: 'Subject screening, consent verification & clinical visit scheduling.',
-    color: 'border-teal-200 bg-teal-50 text-teal-800',
-    icon: <UserCheck className="w-4 h-4 text-teal-600" />
+    label: 'Coordinator',
+    duty: 'Operate trial activities, registration, screening & visits.',
+    color: 'border-emerald-300 bg-emerald-50 text-emerald-800',
+    icon: <UserCheck className="w-4 h-4 text-emerald-600" />
   },
   {
-    username: 'monitor',
-    roleName: 'CLINICAL_TRIAL_MONITOR',
-    label: 'Clinical Trial Monitor',
-    duty: 'Source data verification (SDV), monitor visit reports & GCP adherence.',
-    color: 'border-amber-200 bg-amber-50 text-amber-800',
-    icon: <Activity className="w-4 h-4 text-amber-600" />
-  },
-  {
-    username: 'regulator',
-    roleName: 'REGULATOR',
-    label: 'Regulatory Inspector',
-    duty: 'Inspect tamper-evident audit trails, regulatory filings & CDSCO compliance.',
-    color: 'border-slate-300 bg-slate-100 text-slate-800',
-    icon: <Scale className="w-4 h-4 text-slate-700" />
+    username: 'ethics',
+    roleName: 'ETHICS_COMMITTEE',
+    label: 'Ethics Team',
+    duty: 'Review ethics submissions, documents & compliance tracking.',
+    color: 'border-violet-300 bg-violet-50 text-violet-800',
+    icon: <FileCheck2 className="w-4 h-4 text-violet-600" />
   },
   {
     username: 'admin',
     roleName: 'ADMIN',
-    label: 'System Administrator',
-    duty: 'Full system RBAC, user management, audit logs & system health.',
-    color: 'border-purple-200 bg-purple-50 text-purple-800',
-    icon: <ShieldCheck className="w-4 h-4 text-purple-600" />
+    label: 'Administrator',
+    duty: 'Manage the CTMS platform, users, permissions and system settings.',
+    color: 'border-teal-300 bg-teal-50 text-teal-800',
+    icon: <ShieldCheck className="w-4 h-4 text-teal-600" />
   }
 ];
 
 export const DashboardLayout: React.FC = () => {
-  const { user, role, hasPermission, logout, login } = useAuth();
+  const { user, role, logout, login } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isPersonaModalOpen, setIsPersonaModalOpen] = useState(false);
+  const [isMatrixModalOpen, setIsMatrixModalOpen] = useState(false);
   const [switchingTo, setSwitchingTo] = useState<string | null>(null);
+
+  const roleDef = getRoleDefinition(role);
 
   const handleLogout = async () => {
     await logout();
@@ -121,76 +118,118 @@ export const DashboardLayout: React.FC = () => {
     }
   };
 
-  const isAdmin = role === 'ADMIN';
-  const isEthics = role === 'ETHICS_COMMITTEE';
-  const isPV = role === 'PHARMACOVIGILANCE_OFFICER';
-  const isRegulator = role === 'REGULATOR';
-
-  // Strict GCP / Regulatory segregation of duties:
-  // Subject operational scheduling is restricted for Ethics, PV, and Regulators
-  const canViewTrials = hasPermission('trial.view') || isAdmin;
-  const canViewParticipants =
-    (hasPermission('participant.view') || isAdmin) && !isEthics && !isPV && !isRegulator;
-  const canViewEthics = (hasPermission('ethics.view') || isAdmin) && !isPV;
-  const canViewSafety = (hasPermission('safety.view') || isAdmin) && !isEthics;
-  const canViewInterop = hasPermission('interop.fhir') || hasPermission('interop.export') || isAdmin;
-  const canViewAudit = hasPermission('audit.view') || hasPermission('VIEW_AUDIT_LOG') || isAdmin || role === 'REGULATOR';
+  // Helper to render dynamic Lucide icons for role sidebars
+  const renderSidebarIcon = (iconName: string, className = "w-4 h-4") => {
+    switch (iconName) {
+      case 'LayoutDashboard': return <LayoutDashboard className={className} />;
+      case 'FlaskConical': return <FlaskConical className={className} />;
+      case 'Users': return <Users className={className} />;
+      case 'Building2': return <Building2 className={className} />;
+      case 'BarChart3': return <BarChart3 className={className} />;
+      case 'ShieldAlert': return <ShieldAlert className={className} />;
+      case 'UserCircle': return <UserCircle className={className} />;
+      case 'CalendarCheck': return <CalendarCheck className={className} />;
+      case 'Stethoscope': return <Stethoscope className={className} />;
+      case 'FileText': return <FileText className={className} />;
+      case 'UserPlus': return <UserPlus className={className} />;
+      case 'CheckSquare': return <CheckSquare className={className} />;
+      case 'UserCheck': return <UserCheck className={className} />;
+      case 'Calendar': return <Calendar className={className} />;
+      case 'Activity': return <Activity className={className} />;
+      case 'FileCheck2': return <FileCheck2 className={className} />;
+      case 'FolderGit2': return <FolderGit2 className={className} />;
+      case 'ShieldCheck': return <ShieldCheck className={className} />;
+      case 'ScrollText': return <ScrollText className={className} />;
+      case 'Settings': return <Settings className={className} />;
+      default: return <LayoutDashboard className={className} />;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
       {/* Top Government/Institute Header */}
-      <header className="bg-ayush-950 text-white shadow-md border-b border-ayush-800 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="bg-slate-950 text-white shadow-lg border-b border-slate-800 z-30 sticky top-0">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left branding */}
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 rounded-md text-ayush-200 hover:text-white hover:bg-ayush-900 focus:outline-none"
+                className="md:hidden p-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 focus:outline-none"
               >
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
               
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-ayush-600 to-ayush-800 flex items-center justify-center border border-ayush-500/30 shadow-inner">
-                  <Activity className="w-6 h-6 text-emerald-300" />
+                {/* Subtle Ayurveda Lotus/Leaf symbol */}
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-teal-500 to-emerald-500 p-0.5 shadow-md flex items-center justify-center flex-shrink-0">
+                  <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                    <svg className="w-5 h-5 text-teal-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2C6.5 2 2 6.5 2 12c0 5 3.5 9 8.5 9.8" />
+                      <path d="M12 2c5.5 0 10 4.5 10 10 0 5-3.5 9-8.5 9.8" />
+                      <path d="M12 2v20" />
+                      <path d="M12 7a5 5 0 0 1 5 5c0 3-2 5-5 5" />
+                      <path d="M12 7a5 5 0 0 0-5 5c0 3 2 5 5 5" />
+                    </svg>
+                  </div>
                 </div>
+
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-ayush-300">Ministry of Ayush</span>
-                    <span className="text-[10px] bg-ayush-900 border border-ayush-700 px-1.5 py-0.2 rounded text-ayush-200">GCP CTMS</span>
+                    <span className="text-base font-black tracking-tight text-white font-serif">AIIA</span>
+                    <span className="text-slate-600 text-xs">|</span>
+                    <span className="text-xs font-semibold text-teal-300 tracking-wide">
+                      Clinical Trials Dashboard
+                    </span>
+                    <span className="hidden sm:inline-block text-[10px] bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-slate-300 font-mono">
+                      CTMS • SIH26046
+                    </span>
                   </div>
-                  <h1 className="text-sm sm:text-base font-bold text-white tracking-tight">
-                    AIIA Clinical Trials Dashboard
-                  </h1>
+                  <p className="text-[11px] text-slate-400 hidden sm:block">
+                    Right Access • Right People • Better Research
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Right user & session status & 1-Click Persona Switcher */}
-            <div className="flex items-center space-x-3 sm:space-x-4">
+            {/* Right Action Tools & User Profile */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              {/* 5-Role Matrix Showcase button */}
+              <button
+                type="button"
+                onClick={() => setIsMatrixModalOpen(true)}
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold text-teal-200 bg-teal-950/80 hover:bg-teal-900 border border-teal-700/70 rounded-lg transition-all shadow-sm hover:scale-[1.02]"
+                title="View 5-Role Architecture & Sidebar Infographic Matrix"
+              >
+                <Layers className="w-3.5 h-3.5 text-teal-400" />
+                <span className="hidden sm:inline">5-Role Architecture</span>
+                <span className="sm:hidden text-[11px]">Matrix</span>
+              </button>
+
               {/* 1-Click Persona Switcher button */}
               <button
                 type="button"
                 onClick={() => setIsPersonaModalOpen(true)}
-                className="inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/60 rounded-lg transition-all shadow-sm group"
-                title="Instantly switch perspective between PI, Ethics, PV, CRA, Auditor, or Admin"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold text-indigo-200 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/70 rounded-lg transition-all shadow-sm hover:scale-[1.02]"
+                title="Switch between Researcher, Investigator, Coordinator, Ethics, Admin"
               >
-                <Zap className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline">Switch Persona</span>
-                <span className="sm:hidden text-[10px] font-mono">Role</span>
+                <Zap className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="hidden sm:inline">Switch Role</span>
+                <span className="sm:hidden text-[11px]">Role</span>
               </button>
 
-              <div className="hidden md:flex flex-col text-right">
-                <span className="text-xs font-medium text-slate-200">{user?.full_name}</span>
-                <span className="text-[11px] text-ayush-300 font-mono">@{user?.username}</span>
+              {/* User Profile & Role Pill */}
+              <div className="hidden lg:flex flex-col text-right pl-2 border-l border-slate-800">
+                <span className="text-xs font-semibold text-slate-200">{user?.full_name}</span>
+                <span className="text-[11px] text-slate-400 font-mono">@{user?.username}</span>
               </div>
+              
               {role && <StatusBadge status={role} type="role" />}
               
               <button
                 onClick={handleLogout}
                 title="Log Out"
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-ayush-900 hover:bg-rose-900/60 hover:text-rose-200 border border-ayush-700 rounded-lg transition-colors"
+                className="inline-flex items-center space-x-1 px-2.5 py-1.5 text-xs font-medium text-slate-300 bg-slate-900 hover:bg-rose-950 hover:text-rose-200 border border-slate-800 hover:border-rose-800/60 rounded-lg transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span className="hidden md:inline">Logout</span>
@@ -200,279 +239,152 @@ export const DashboardLayout: React.FC = () => {
         </div>
       </header>
 
-
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
-        {/* Navigation Sidebar */}
+      {/* Main Layout Container */}
+      <div className="flex-1 flex max-w-[1600px] w-full mx-auto">
+        {/* Modern Enterprise Dark Navy Sidebar Navigation */}
         <aside
           className={`
-            fixed md:static inset-y-0 left-0 z-20 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out md:translate-x-0 flex flex-col justify-between pt-16 md:pt-0
-            ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+            fixed md:static inset-y-0 left-0 z-20 w-64 bg-slate-950 text-slate-200 border-r border-slate-800 transform transition-transform duration-200 ease-in-out md:translate-x-0 flex flex-col justify-between pt-16 md:pt-0 shadow-xl
+            ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
         >
-          <div className="p-4 space-y-6">
-            {/* Institute badge */}
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center space-x-3">
-              <Building2 className="w-5 h-5 text-ayush-700 flex-shrink-0" />
-              <div className="text-xs">
-                <p className="font-semibold text-slate-800">All India Institute of Ayurveda</p>
-                <p className="text-slate-500 text-[11px]">New Delhi, India</p>
+          <div className="p-3.5 space-y-4 overflow-y-auto">
+            {/* Institute & Role Identifier Banner */}
+            <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800/80 shadow-inner">
+              <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                <span className="text-slate-300 flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-teal-400" />
+                  <span>AIIA CTMS</span>
+                </span>
+                <span className="font-mono text-[9px] bg-slate-800 text-teal-300 px-1.5 py-0.5 rounded border border-slate-700">
+                  v1.0
+                </span>
+              </div>
+              <div className="flex items-center space-x-2.5">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${roleDef.themeColor.activeSidebar}`}>
+                  {roleDef.title.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold text-white truncate">{roleDef.title}</h4>
+                  <p className="text-[10px] text-slate-400 truncate">{roleDef.purpose}</p>
+                </div>
               </div>
             </div>
 
-            {/* Main Menu Links */}
+            {/* Dynamic Role-Specific Navigation Links */}
             <div>
-              <p className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Navigation
+              <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                {roleDef.title} Navigation
               </p>
               <nav className="space-y-1">
-                <NavLink
-                  to="/dashboard"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-ayush-50 text-ayush-900 font-semibold border-l-4 border-ayush-700'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                    }`
-                  }
-                >
-                  <div className="flex items-center space-x-3">
-                    <LayoutDashboard className="w-4 h-4 text-ayush-600" />
-                    <span>Dashboard</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </NavLink>
-
-                {canViewTrials && (
+                {roleDef.sidebarItems.map((item) => (
                   <NavLink
-                    to="/trials"
+                    key={item.label}
+                    to={item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                         isActive
-                          ? 'bg-ayush-50 text-ayush-900 font-semibold border-l-4 border-ayush-700'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                          ? `${roleDef.themeColor.activeSidebar}`
+                          : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
                       }`
                     }
                   >
-                    <div className="flex items-center space-x-3">
-                      <FlaskConical className="w-4 h-4 text-ayush-600" />
-                      <span>Clinical Trials</span>
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      {renderSidebarIcon(item.iconName, 'w-4 h-4 flex-shrink-0')}
+                      <span className="truncate">{item.label}</span>
                     </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                    <ChevronRight className="w-3 h-3 text-slate-400 opacity-60" />
                   </NavLink>
-                )}
-
-                {canViewParticipants && (
-                  <NavLink
-                    to="/participants"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-ayush-50 text-ayush-900 font-semibold border-l-4 border-ayush-700'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                      }`
-                    }
-                  >
-                    <div className="flex items-center space-x-3">
-                      <UserCheck className="w-4 h-4 text-ayush-600" />
-                      <span>Participants</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </NavLink>
-                )}
-
-                {canViewEthics && (
-                  <NavLink
-                    to="/ethics-regulatory"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-ayush-50 text-ayush-900 font-semibold border-l-4 border-ayush-700'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                      }`
-                    }
-                  >
-                    <div className="flex items-center space-x-3">
-                      <FileCheck2 className="w-4 h-4 text-ayush-600" />
-                      <span>Ethics & CTRI</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </NavLink>
-                )}
-
-                {canViewSafety && (
-                  <NavLink
-                    to="/safety"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-ayush-50 text-ayush-900 font-semibold border-l-4 border-ayush-700'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                      }`
-                    }
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Activity className="w-4 h-4 text-rose-600" />
-                      <span>Safety & PV</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </NavLink>
-                )}
-
-                {canViewInterop && (
-                  <NavLink
-                    to="/interoperability"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-ayush-50 text-ayush-900 font-semibold border-l-4 border-ayush-700'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                      }`
-                    }
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Network className="w-4 h-4 text-emerald-600" />
-                      <span>FHIR / CDISC</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </NavLink>
-                )}
-
-                {isAdmin && (
-                  <NavLink
-                    to="/users"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-ayush-50 text-ayush-900 font-semibold border-l-4 border-ayush-700'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                      }`
-                    }
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Users className="w-4 h-4 text-ayush-600" />
-                      <span>Users</span>
-                    </div>
-                    <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-mono font-medium">Admin</span>
-                  </NavLink>
-                )}
-
-                {canViewAudit && (
-                  <NavLink
-                    to="/audit-logs"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-ayush-50 text-ayush-900 font-semibold border-l-4 border-ayush-700'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                      }`
-                    }
-                  >
-                    <div className="flex items-center space-x-3">
-                      <ScrollText className="w-4 h-4 text-ayush-600" />
-                      <span>Audit Log</span>
-                    </div>
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  </NavLink>
-                )}
-
-                <NavLink
-                  to="/profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-ayush-50 text-ayush-900 font-semibold border-l-4 border-ayush-700'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                    }`
-                  }
-                >
-                  <div className="flex items-center space-x-3">
-                    <UserCircle className="w-4 h-4 text-ayush-600" />
-                    <span>My Profile</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </NavLink>
+                ))}
               </nav>
             </div>
-          </div>
 
-          {/* Role Jurisdiction & Restriction Scope Box */}
-          <div className="mx-4 mb-2 p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-            <div className="flex items-center justify-between font-bold text-slate-700 text-[11px] mb-1">
-              <span>Jurisdiction Scope</span>
-              <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold uppercase">Active</span>
+            {/* Role Governance & RBAC Scope Pill */}
+            <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-300">RBAC Governance</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                  Enforced
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-400 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span>Authorized Modules:</span>
+                  <strong className="text-emerald-400">{roleDef.keyAccess.length}</strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Restricted Actions:</span>
+                  <strong className="text-rose-400">{roleDef.restrictions.length}</strong>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMatrixModalOpen(true)}
+                className="w-full mt-1 py-1 px-2 text-[10px] font-bold text-teal-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded transition-colors flex items-center justify-center space-x-1"
+              >
+                <Layers className="w-3 h-3" />
+                <span>View 5-Role Matrix</span>
+              </button>
             </div>
-            <p className="text-[10px] text-slate-500 leading-tight">
-              {role === 'ETHICS_COMMITTEE' && 'Protocol ethics clearance & ICF compliance. Subject operational visit queues restricted.'}
-              {role === 'PHARMACOVIGILANCE_OFFICER' && 'Drug safety surveillance, 24h SAE countdown & Ayush ADR causality. Hospital visit queues restricted.'}
-              {role === 'REGULATOR' && 'Statutory compliance, CTRI approvals & 21 CFR Part 11 audit trails. Internal clinic ops restricted.'}
-              {role === 'CLINICAL_TRIAL_MONITOR' && 'Site GCP monitoring, source data verification (SDV) & visit adherence tracking.'}
-              {role === 'STUDY_COORDINATOR' && 'Participant screening scorecards, ICF verification & clinical visit scheduling.'}
-              {role === 'PRINCIPAL_INVESTIGATOR' && 'Full protocol leadership, site investigator teams & clinical trial operations.'}
-              {role === 'ADMIN' && 'Universal system administration, security controls & RBAC user management.'}
-            </p>
           </div>
 
           {/* Bottom user footer bar */}
-          <div className="p-4 border-t border-slate-200 bg-slate-50/80">
-            <div className="text-xs space-y-1">
+          <div className="p-3.5 border-t border-slate-800 bg-slate-950">
+            <div className="text-xs space-y-1 text-slate-400">
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">User:</span>
-                <span className="font-semibold text-slate-800 truncate max-w-[120px]">{user?.username}</span>
+                <span>Account:</span>
+                <span className="font-semibold text-slate-200 truncate max-w-[120px] font-mono text-[11px]">
+                  @{user?.username}
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">Role:</span>
-                <span className="font-semibold text-ayush-800 text-[11px] truncate max-w-[130px]">{role}</span>
-              </div>
-              <div className="flex items-center justify-between pt-1 text-[10px] text-slate-400">
                 <span>Compliance:</span>
-                <span className="text-emerald-700 font-mono">GCP / 21 CFR 11</span>
+                <span className="text-teal-400 font-mono text-[10px]">21 CFR Part 11</span>
               </div>
             </div>
           </div>
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto min-w-0">
           <Outlet />
         </main>
       </div>
 
-      {/* Footer bar */}
-      <footer className="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>All India Institute of Ayurveda (AIIA) — Clinical Trial Management System</span>
-          <span className="text-slate-400 text-[11px]">PS SIH26046 • Phase 1 Foundation & RBAC</span>
+      {/* Global Government Notice Footer */}
+      <footer className="bg-white border-t border-slate-200 py-3.5 text-center text-xs text-slate-500">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-slate-700">All India Institute of Ayurveda (AIIA)</span>
+            <span className="text-slate-300">•</span>
+            <span>Clinical Trials Management System</span>
+          </div>
+          <div className="text-slate-400 text-[11px] font-mono">
+            Smart India Hackathon SIH26046 • 5 Canonical Roles Architecture
+          </div>
         </div>
       </footer>
 
       {/* 1-Click Interactive Persona Switcher Modal */}
       {isPersonaModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
             {/* Modal Header */}
-            <div className="p-5 bg-gradient-to-r from-ayush-950 via-slate-900 to-ayush-900 text-white flex items-center justify-between border-b border-ayush-800">
+            <div className="p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-ayush-950 text-white flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  <Zap className="w-5 h-5 text-emerald-400" />
+                <div className="p-2 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                  <Zap className="w-5 h-5 text-teal-400" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                    <span>Instant Persona Switcher</span>
-                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700/60 font-semibold">
-                      SIH26046 Prototype
+                    <span>Switch Role Persona</span>
+                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-teal-950 text-teal-300 border border-teal-700/60 font-semibold">
+                      5 Roles
                     </span>
                   </h3>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    Select any role to test real-time RBAC permissions and customized operational views.
+                    Experience the platform through each of the 5 canonical stakeholder perspectives.
                   </p>
                 </div>
               </div>
@@ -485,7 +397,7 @@ export const DashboardLayout: React.FC = () => {
             </div>
 
             {/* Persona Cards Grid */}
-            <div className="p-5 overflow-y-auto space-y-2.5 divide-y-0">
+            <div className="p-5 overflow-y-auto space-y-2.5">
               {SWITCHER_PERSONAS.map((p) => {
                 const isActive = user?.username === p.username;
                 const isThisSwitching = switchingTo === p.username;
@@ -498,8 +410,8 @@ export const DashboardLayout: React.FC = () => {
                     disabled={!!switchingTo}
                     className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between group ${
                       isActive
-                        ? 'border-emerald-500 bg-emerald-50/50 shadow-sm ring-1 ring-emerald-500/40'
-                        : 'border-slate-200 bg-white hover:border-ayush-600 hover:shadow-sm'
+                        ? 'border-teal-500 bg-teal-50/50 shadow-sm ring-1 ring-teal-500/40'
+                        : 'border-slate-200 bg-white hover:border-slate-400 hover:shadow-sm'
                     } disabled:opacity-50`}
                   >
                     <div className="flex items-start space-x-3.5">
@@ -508,10 +420,10 @@ export const DashboardLayout: React.FC = () => {
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
-                          <span className="font-bold text-xs text-slate-900 group-hover:text-ayush-900 transition-colors">
+                          <span className="font-bold text-xs text-slate-900 group-hover:text-teal-900 transition-colors">
                             {p.label}
                           </span>
-                          <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded border font-semibold ${p.color}`}>
+                          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border font-semibold ${p.color}`}>
                             @{p.username}
                           </span>
                         </div>
@@ -523,17 +435,17 @@ export const DashboardLayout: React.FC = () => {
 
                     <div className="ml-3 flex-shrink-0">
                       {isThisSwitching ? (
-                        <div className="flex items-center space-x-1.5 text-xs text-ayush-700 font-bold">
+                        <div className="flex items-center space-x-1.5 text-xs text-teal-700 font-bold">
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Switching...</span>
+                          <span>Activating...</span>
                         </div>
                       ) : isActive ? (
-                        <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Active View</span>
+                        <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-[11px] font-bold bg-teal-100 text-teal-800 border border-teal-200">
+                          <Check className="w-3.5 h-3.5 text-teal-600" />
+                          <span>Active Role</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center text-xs font-bold text-slate-400 group-hover:text-ayush-800 transition-colors">
+                        <span className="inline-flex items-center text-xs font-bold text-slate-400 group-hover:text-teal-700 transition-colors">
                           Switch ➔
                         </span>
                       )}
@@ -546,7 +458,7 @@ export const DashboardLayout: React.FC = () => {
             {/* Modal Footer */}
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
               <span className="text-slate-400 font-mono text-[11px]">
-                Active User: <strong className="text-slate-700">@{user?.username}</strong> ({role})
+                Active: <strong className="text-slate-700">@{user?.username}</strong> ({role})
               </span>
               <button
                 type="button"
@@ -559,7 +471,12 @@ export const DashboardLayout: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* 5-Role Architectural Matrix Showcase Modal */}
+      <RoleMatrixModal
+        isOpen={isMatrixModalOpen}
+        onClose={() => setIsMatrixModalOpen(false)}
+      />
     </div>
   );
 };
-

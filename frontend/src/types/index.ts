@@ -1,11 +1,48 @@
 export type RoleName =
-  | 'ADMIN'
+  | 'RESEARCHER'
+  | 'INVESTIGATOR'
   | 'PRINCIPAL_INVESTIGATOR'
+  | 'COORDINATOR'
   | 'STUDY_COORDINATOR'
-  | 'CLINICAL_TRIAL_MONITOR'
+  | 'ETHICS_TEAM'
   | 'ETHICS_COMMITTEE'
+  | 'ADMINISTRATOR'
+  | 'ADMIN'
+  | 'CLINICAL_TRIAL_MONITOR'
   | 'PHARMACOVIGILANCE_OFFICER'
   | 'REGULATOR';
+
+export interface SidebarNavItem {
+  label: string;
+  path: string;
+  iconName: string;
+  badge?: string;
+}
+
+export interface RoleDefinition {
+  id: string;
+  name: RoleName;
+  canonicalKey: 'researcher' | 'investigator' | 'coordinator' | 'ethics' | 'admin';
+  title: string;
+  purpose: string;
+  themeColor: {
+    primary: string;
+    accent: string;
+    bgLight: string;
+    border: string;
+    text: string;
+    badge: string;
+    activeSidebar: string;
+  };
+  sidebarItems: SidebarNavItem[];
+  keyAccess: string[];
+  restrictions: string[];
+  demoUser: {
+    username: string;
+    fullName: string;
+    email: string;
+  };
+}
 
 export type TrialStatus =
   | 'Draft'

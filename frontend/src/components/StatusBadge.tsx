@@ -217,11 +217,16 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, type = 'status
   // Role badge
   const roleName = String(status);
   const roleColors: Record<string, string> = {
-    ADMIN: 'bg-purple-100 text-purple-800 border-purple-200',
-    PRINCIPAL_INVESTIGATOR: 'bg-blue-100 text-blue-800 border-blue-200',
-    STUDY_COORDINATOR: 'bg-teal-100 text-teal-800 border-teal-200',
+    RESEARCHER: 'bg-purple-100 text-purple-800 border-purple-300 font-semibold',
+    INVESTIGATOR: 'bg-blue-100 text-blue-800 border-blue-300 font-semibold',
+    PRINCIPAL_INVESTIGATOR: 'bg-blue-100 text-blue-800 border-blue-300 font-semibold',
+    COORDINATOR: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold',
+    STUDY_COORDINATOR: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold',
+    ETHICS_TEAM: 'bg-violet-100 text-violet-800 border-violet-300 font-semibold',
+    ETHICS_COMMITTEE: 'bg-violet-100 text-violet-800 border-violet-300 font-semibold',
+    ADMINISTRATOR: 'bg-teal-100 text-teal-800 border-teal-300 font-semibold',
+    ADMIN: 'bg-teal-100 text-teal-800 border-teal-300 font-semibold',
     CLINICAL_TRIAL_MONITOR: 'bg-amber-100 text-amber-800 border-amber-200',
-    ETHICS_COMMITTEE: 'bg-indigo-100 text-indigo-800 border-indigo-200',
     PHARMACOVIGILANCE_OFFICER: 'bg-rose-100 text-rose-800 border-rose-200',
     REGULATOR: 'bg-slate-200 text-slate-800 border-slate-300',
   };

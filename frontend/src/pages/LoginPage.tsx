@@ -17,8 +17,9 @@ import {
   Stethoscope,
   Building2,
   FileCheck2,
-  Scale,
-  CheckCircle2
+  CheckCircle2,
+  BarChart3,
+  UserCheck
 } from 'lucide-react';
 
 interface Persona {
@@ -33,58 +34,49 @@ interface Persona {
 
 const PERSONAS: Persona[] = [
   {
-    label: 'Principal Investigator',
-    roleTitle: 'PI / Clinical Researcher',
+    label: 'Researcher',
+    roleTitle: 'Monitor & Analyze',
+    username: 'researcher',
+    duty: 'Monitor trial progress, aggregate safety summaries, multicentric site KPIs & research analytics.',
+    badgeColor: 'bg-purple-950 text-purple-300 border-purple-800 font-mono',
+    borderColor: 'border-purple-800/80 hover:border-purple-500 hover:bg-slate-800/90',
+    icon: <BarChart3 className="w-4 h-4 text-purple-400" />
+  },
+  {
+    label: 'Investigator',
+    roleTitle: 'Clinical Decisions & Participants',
     username: 'investigator',
-    duty: 'Manage protocols, multi-center sites, participant visits & NAMASTE auto-coding.',
-    badgeColor: 'bg-slate-900 text-blue-300 border-slate-700 font-mono',
-    borderColor: 'border-slate-700/80 hover:border-blue-500 hover:bg-slate-800/90',
+    duty: 'Manage assigned participants, schedule & record visits, clinical assessments & AE/SAE.',
+    badgeColor: 'bg-blue-950 text-blue-300 border-blue-800 font-mono',
+    borderColor: 'border-blue-800/80 hover:border-blue-500 hover:bg-slate-800/90',
     icon: <Stethoscope className="w-4 h-4 text-blue-400" />
   },
   {
-    label: 'Ethics Committee Chair',
-    roleTitle: 'IEC / Institutional Review Board',
+    label: 'Coordinator',
+    roleTitle: 'Operate Trial Activities',
+    username: 'coordinator',
+    duty: 'Register participants, screening workflow, eligibility checklist & visit follow-ups.',
+    badgeColor: 'bg-emerald-950 text-emerald-300 border-emerald-800 font-mono',
+    borderColor: 'border-emerald-800/80 hover:border-emerald-500 hover:bg-slate-800/90',
+    icon: <UserCheck className="w-4 h-4 text-emerald-400" />
+  },
+  {
+    label: 'Ethics Team',
+    roleTitle: 'Review & Approve',
     username: 'ethics',
-    duty: 'Review protocol dossiers, evaluate consent, and execute 21 CFR Part 11 digital approval signatures.',
-    badgeColor: 'bg-slate-900 text-indigo-300 border-slate-700 font-mono',
-    borderColor: 'border-slate-700/80 hover:border-indigo-500 hover:bg-slate-800/90',
-    icon: <FileCheck2 className="w-4 h-4 text-indigo-400" />
+    duty: 'Review ethics submissions, evaluate consent & execute 21 CFR Part 11 digital approval signatures.',
+    badgeColor: 'bg-violet-950 text-violet-300 border-violet-800 font-mono',
+    borderColor: 'border-violet-800/80 hover:border-violet-500 hover:bg-slate-800/90',
+    icon: <FileCheck2 className="w-4 h-4 text-violet-400" />
   },
   {
-    label: 'Pharmacovigilance Lead',
-    roleTitle: 'PV Officer / Safety Reviewer',
-    username: 'pharmacovigilance',
-    duty: 'Monitor 24-hour statutory SAE clocks, medical causality review & 1-click DCGI notice dispatch.',
-    badgeColor: 'bg-slate-900 text-rose-300 border-slate-700 font-mono',
-    borderColor: 'border-slate-700/80 hover:border-rose-500 hover:bg-slate-800/90',
-    icon: <Zap className="w-4 h-4 text-rose-400" />
-  },
-  {
-    label: 'Clinical Trial Monitor',
-    roleTitle: 'CRA / Site Auditor',
-    username: 'monitor',
-    duty: 'Monitor site enrollment targets, source data verification (SDV) & GCP adherence.',
-    badgeColor: 'bg-slate-900 text-amber-300 border-slate-700 font-mono',
-    borderColor: 'border-slate-700/80 hover:border-amber-500 hover:bg-slate-800/90',
-    icon: <Activity className="w-4 h-4 text-amber-400" />
-  },
-  {
-    label: 'Regulatory Inspector',
-    roleTitle: 'DCGI / CDSCO Auditor',
-    username: 'regulator',
-    duty: 'Inspect tamper-evident SHA-256 audit logs, expedited SAE notices & statutory compliance.',
-    badgeColor: 'bg-slate-900 text-teal-300 border-slate-700 font-mono',
-    borderColor: 'border-slate-700/80 hover:border-teal-500 hover:bg-slate-800/90',
-    icon: <Scale className="w-4 h-4 text-teal-400" />
-  },
-  {
-    label: 'System Administrator',
-    roleTitle: 'Admin / Security Officer',
+    label: 'Administrator',
+    roleTitle: 'Manage System & Access',
     username: 'admin',
-    duty: 'Role-based access control (RBAC), user directory provisioning & system telemetry.',
-    badgeColor: 'bg-slate-900 text-purple-300 border-slate-700 font-mono',
-    borderColor: 'border-slate-700/80 hover:border-purple-500 hover:bg-slate-800/90',
-    icon: <ShieldCheck className="w-4 h-4 text-purple-400" />
+    duty: 'Role-based access control (RBAC), user directory provisioning, audit logs & system health.',
+    badgeColor: 'bg-teal-950 text-teal-300 border-teal-800 font-mono',
+    borderColor: 'border-teal-800/80 hover:border-teal-500 hover:bg-slate-800/90',
+    icon: <ShieldCheck className="w-4 h-4 text-teal-400" />
   }
 ];
 

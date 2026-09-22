@@ -21,6 +21,10 @@ from app.services.audit_service import audit_service
 
 ROLES_DATA = [
     {
+        "name": "RESEARCHER",
+        "description": "Clinical and scientific researcher monitoring trial analytics, aggregate safety, and KPIs."
+    },
+    {
         "name": "ADMIN",
         "description": "System Administrator with full access to user management, system settings, and audit logs."
     },
@@ -97,6 +101,13 @@ PERMISSIONS_DATA = [
 DEMO_PASSWORD = "Password@AIIA2026!"
 
 DEMO_USERS = [
+    {
+        "username": "researcher",
+        "email": "dr.ananya@aiia.gov.in",
+        "full_name": "Dr. Ananya Roy (Clinical Researcher)",
+        "role_name": "RESEARCHER",
+        "password": DEMO_PASSWORD
+    },
     {
         "username": "admin",
         "email": "admin@aiia.gov.in",
@@ -294,6 +305,19 @@ def init_db(db: Session) -> None:
                 permissions_map["regulatory.manage"],
                 permissions_map["safety.view"],
                 permissions_map["safety.create"],
+                permissions_map["interop.fhir"],
+                permissions_map["interop.export"]
+            ]
+        elif role.name == "RESEARCHER":
+            role.permissions = [
+                permissions_map["VIEW_DASHBOARD"],
+                permissions_map["dashboard.view"],
+                permissions_map["trial.view"],
+                permissions_map["trial.site.view"],
+                permissions_map["trial.protocol.view"],
+                permissions_map["trial.milestone.view"],
+                permissions_map["participant.view"],
+                permissions_map["safety.view"],
                 permissions_map["interop.fhir"],
                 permissions_map["interop.export"]
             ]
